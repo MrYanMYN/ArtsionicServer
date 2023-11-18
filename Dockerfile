@@ -17,10 +17,9 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Make port 7001 available to the world outside this container
-EXPOSE 7001
+EXPOSE $PORT
 
 # Define environment variable
 ENV FLASK_APP=server.py
 
-# Run app.py when the container launches
-CMD ["python", "server.py"]
+CMD ["sh", "-c", "flask run --host=0.0.0.0 --port=$PORT"]
