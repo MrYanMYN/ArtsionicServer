@@ -23,4 +23,4 @@ EXPOSE 7001
 ENV FLASK_APP=server.py
 
 # Run app.py when the container launches
-CMD ["flask", "run", "--host=0.0.0.0", "--port=7001"]
+CMD ["python", "server.py"]
