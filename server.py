@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
@@ -186,4 +188,5 @@ def uploadPost():
         return jsonify({'success': False, 'message': f'Error starting task: {err}'})
 
 if __name__ == "__main__":
-    app.run(port=7001)
+    port = int(os.environ.get('PORT', 7001))
+    app.run(host='0.0.0.0', port=port)
