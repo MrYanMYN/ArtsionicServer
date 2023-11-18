@@ -10,3 +10,4 @@ flask~=3.0.0
 flask_cors~=4.0.0
 super-image~=0.1.7
 gunicorn~=21.2.0
+removebg~=0.4
