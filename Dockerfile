@@ -22,4 +22,4 @@ EXPOSE $PORT
 # Define environment variable
 ENV FLASK_APP=server.py
 
-CMD ["sh", "-c", "flask run --host=0.0.0.0 --port=$PORT"]
+CMD ["gunicorn", "--workers=3", "--bind=0.0.0.0:$PORT", "server:app"]
