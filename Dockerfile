@@ -25,4 +25,4 @@ EXPOSE $PORT
 # Define environment variable
 ENV FLASK_APP=server.py
 
-CMD ["sh", "-c", "gunicorn --workers=3 --bind=0.0.0.0:$PORT server:app"]
+CMD ["sh", "-c", "gunicorn --workers=1 --bind=0.0.0.0:$PORT server:app"]
