@@ -64,10 +64,12 @@ def generateImgPipeline(trend, local_queue):
 def generatePostPipeline(current_metadata, localQueue, metadata_id):
     global images
     img_obj = current_metadata['image_object']
-    img_obj.upscale_image(current_metadata['imagePath'])
+    # img_obj.upscale_image(current_metadata['imagePath'])
+    img_obj.upscale_img_via_api(current_metadata['imagePath'])
     complete_img_path = f"./complete_imgs/{current_metadata['trend']}_complete_{time.time()}.png"
     current_metadata['imagePath'] = complete_img_path
     img_obj.remove_background('temp/upscaled_2x.png', complete_img_path)
+    # img_obj.remove_background_via_api('temp/upscaled_2x.png', complete_img_path)
     # Add here the complete_img_path to load the image into memory and switch the b64 field with the new image data
     # with open(complete_img_path, 'rb') as image_file:
     #     base64_bytes = base64.b64encode(image_file.read())

@@ -6,6 +6,7 @@ WORKDIR /usr/src/app
 
 RUN mkdir out
 RUN mkdir complete_imgs
+RUN mkdir temp
 
 # Install system dependencies required by OpenCV
 RUN apt-get update && apt-get install -y \

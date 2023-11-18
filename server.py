@@ -188,5 +188,5 @@ def uploadPost():
         return jsonify({'success': False, 'message': f'Error starting task: {err}'})
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 7001))
-    app.run(host='0.0.0.0', port=port)
+    # port = int(os.environ.get('PORT', 7001))
+    app.run(host='0.0.0.0', port=7001)

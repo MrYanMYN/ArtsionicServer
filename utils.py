@@ -16,6 +16,7 @@ from dalle3 import Dalle
 import sqlite3
 import printify as ptfy
 from dotenv import load_dotenv
+from removebg import RemoveBg
 # API Values
 
 load_dotenv()
@@ -264,6 +265,35 @@ class ImageGen:
         return upscaled_image_path
 
     @autolog
+    def upscale_img_via_api(self, image_path):
+        engine_id = "esrgan-v1-x2plus"
+        api_host = os.getenv('API_HOST', 'https://api.stability.ai')
+        if dreamstudio_api_key is None:
+            raise Exception("Missing Stability API key.")
+
+        response = requests.post(
+            f"{api_host}/v1/generation/{engine_id}/image-to-image/upscale",
+            headers={
+                "Accept": "image/png",
+                "Authorization": f"Bearer {dreamstudio_api_key}"
+            },
+            files={
+                "image": open(image_path, "rb")
+            },
+            data={
+                "width": 2048,
+            }
+        )
+        if response.status_code != 200:
+            raise Exception("Non-200 response: " + str(response.text))
+
+        upscaled_image_path = "temp/upscaled_2x.png"
+        with open(upscaled_image_path, "wb") as f:
+            f.write(response.content)
+
+        return upscaled_image_path, response.content
+
+    @autolog
     def remove_background(self, input_path, output_path):
         with open(input_path, 'rb') as f:
             image_data = f.read()
@@ -271,6 +301,20 @@ class ImageGen:
         output = remove(image_data)
         img = Image.open(BytesIO(output))
         img.save(output_path)
+
+    @autolog
+    def remove_background_via_api(self, input_path, output_path):
+        """
+        :param input_path: input path of the generated image
+        :param output_path: output folder for saving
+        :return: void, saves the img
+        """
+        rmbg = RemoveBg(os.environ.get("BG_REMOVER_API_KEY"), "error.log")
+        with open(input_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read())
+        rmbg.remove_background_from_base64_img(encoded_string, new_file_name=output_path)
+
+
 
     @autolog
     def get_id(self, table_name, column_name, value):
