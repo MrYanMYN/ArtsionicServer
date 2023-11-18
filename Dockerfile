@@ -4,6 +4,9 @@ FROM python:3.10-slim
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
+RUN mkdir out
+RUN mkdir complete_imgs
+
 # Install system dependencies required by OpenCV
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
@@ -22,4 +25,4 @@ EXPOSE $PORT
 # Define environment variable
 ENV FLASK_APP=server.py
 
-CMD ["gunicorn", "--workers=3", "--bind=0.0.0.0:$PORT", "server:app"]
+CMD ["sh", "-c", "gunicorn --workers=3 --bind=0.0.0.0:$PORT server:app"]
