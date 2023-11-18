@@ -84,36 +84,36 @@ def create_product_printify(image_id, metadata, shop_id, API_KEY_PRINTIFY):
         'Content-Type': 'application/json'
     }
 
-    product_data = {
+    product_data_01 = {
         "title": metadata['name'],
         "description": metadata['description'] + "\n\n" + metadata['hashtags'],
-        "blueprint_id": 384,
-        "print_provider_id": 1,
+        "blueprint_id": 725,
+        "print_provider_id": 39,
         "variants": [
             {
-                "id": 45740,
+                "id": 73871,
                 "price": 400,
                 "is_enabled": True
             },
             {
-                "id": 45742,
+                "id": 73873,
                 "price": 400,
                 "is_enabled": True
             },
             {
-                "id": 45744,
+                "id": 73875,
                 "price": 400,
                 "is_enabled": False
             },
             {
-                "id": 45746,
+                "id": 73877,
                 "price": 400,
                 "is_enabled": False
             }
         ],
         "print_areas": [
             {
-                "variant_ids": [45740, 45742, 45744, 45746],
+                "variant_ids": [73871, 73873, 73875, 73877],
                 "placeholders": [
                     {
                         "position": "front",
@@ -136,7 +136,7 @@ def create_product_printify(image_id, metadata, shop_id, API_KEY_PRINTIFY):
     response = requests.post(
         f'https://api.printify.com/v1/shops/{shop_id}/products.json',
         headers=printify_headers,
-        json=product_data
+        json=product_data_01
     )
 
     if response.status_code != 200:

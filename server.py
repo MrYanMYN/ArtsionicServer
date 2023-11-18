@@ -68,13 +68,23 @@ def getPostList():
 
 @app.route('/getTrends', methods=['GET'])
 def getTrends():
-    trends = {}
+    global trends
+    while not dataQueuePosts.empty():
+        trends = {}
+        new_trends = dataQueueTrends.get()
+        trends.update(new_trends)
     try:
-        for region in regions:
-            pulled_trends = utils.pull_trends(region)
-            trends[region] = pulled_trends
-
-        return jsonify({'success': True, 'data': trends})
+        if trends != {}:
+            return jsonify({'success': True, 'data': trends})
+        else:
+            trends = {}
+            for region in regions:
+                pulled_trends = utils.pull_trends(region)
+                trends[region] = pulled_trends
+            processing_thread = threading.Thread(target=pipeline.extendedTrendPullPipeline,
+                                                 args=(regions, ))
+            processing_thread.start()
+            return jsonify({'success': True, 'data': trends})
     except Exception as err:
         return jsonify({'success': False, 'message': f'Error starting task: {err}', 'data': trends})
 
@@ -106,6 +116,41 @@ def generateImg():
     except Exception as err:
         return jsonify({'success': False, 'message': f'Error starting task: {err}'})
 
+@app.route('/regenerateImg', methods=['POST'])
+def regenerateImg():
+    global images
+    id = request.json
+    id = json.dumps(id)
+    id = json.loads(id)
+    id = int(id["id"])
+
+    try:
+        trend = str(images[id]["trend"])
+        del images[id]
+        processing_thread = threading.Thread(target=pipeline.generateImgPipeline, args=(trend, dataQueueImgs,))
+        processing_thread.start()
+        return jsonify({'success': True, 'message': 'Starting task...'})
+    except Exception as err:
+        return jsonify({'success': False, 'message': f'Error starting task: {err}'})
+@app.route('/removeImg', methods=['POST'])
+def removeImg():
+    global images
+    id = request.json
+    id = json.dumps(id)
+    id = json.loads(id)
+    id = int(id["id"])
+    del images[id]
+    return jsonify({'success': True, 'message': f'removed img {id}'})
+
+@app.route('/removePost', methods=['POST'])
+def removePost():
+    global posts
+    id = request.json
+    id = json.dumps(id)
+    id = json.loads(id)
+    id = int(id["id"])
+    del posts[id]
+    return jsonify({'success': True, 'message': f'removed post {id}'})
 @app.route('/generatePost', methods=['POST'])
 def generatePost():
     global images
@@ -114,7 +159,7 @@ def generatePost():
     image_id = request.json
     image_id = json.dumps(image_id)
     image_id = json.loads(image_id)
-    image_id = image_id["image_id"]
+    image_id = int(image_id["image_id"])
 
     try:
         processing_thread = threading.Thread(target=pipeline.generatePostPipeline, args=(images[image_id], dataQueuePosts, image_id))
@@ -130,7 +175,7 @@ def uploadPost():
     post_id = request.json
     post_id = json.dumps(post_id)
     post_id = json.loads(post_id)
-    post_id = post_id["post_id"]
+    post_id = int(post_id["post_id"])
 
     try:
         processing_thread = threading.Thread(target=pipeline.uploadPost, args=(posts[post_id]["imagePath"], posts[post_id]))

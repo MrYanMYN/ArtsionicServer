@@ -36,14 +36,49 @@ def autolog(func):
     return wrapper
 
 @autolog
-def pull_trends(region):
+def extended_trends_pull(region):
     pytrend = TrendReq()
     df = pytrend.trending_searches(pn=region)
-    trends = []
+    trends = {}
     tmp_df = df
 
     for i in range(0, 19):
-        trends.append(df.at[i, 0])
+        # trends.append(df.at[i, 0])
+        currentTrend = df.at[i, 0]
+        while True:
+            try:
+                topics = pytrend.suggestions(keyword=currentTrend)
+                filtered_topics = [{'title': topic['title'], 'type': topic['type']} for topic in topics]
+                trends[i] = {"trend": df.at[i, 0], "news": "", "relatedTopics": filtered_topics}
+                break
+
+            except:
+                pass
+
+        df = tmp_df
+
+    return trends
+@autolog
+def pull_trends(region):
+    pytrend = TrendReq()
+    df = pytrend.trending_searches(pn=region)
+    trends = {}
+    tmp_df = df
+
+    for i in range(0, 19):
+        # trends.append(df.at[i, 0])
+        currentTrend = df.at[i, 0]
+        while True:
+            try:
+                # topics = pytrend.suggestions(keyword=currentTrend)
+                # filtered_topics = [{'title': topic['title'], 'type': topic['type']} for topic in topics]
+                filtered_topics = []
+                trends[i] = {"trend": df.at[i, 0], "news": "", "relatedTopics": filtered_topics}
+                break
+
+            except:
+                pass
+
         df = tmp_df
 
     return trends
@@ -79,30 +114,57 @@ def filter_trends(trends):
 @autolog
 def generate_prompt(trend):
     # openai.api_base = "http://localhost:1234/v1"
-    systemPrompt = f"""
-            You are an amazing prompt engenieer that is here to design prompts for a text-to-image AI and to preserve the luminous / neon / radiant one color theme. Created prompts from topics like the following examples:
-            
-            Star Wars - Illustration of a luminous yellow BB-8 droid with vibrant energy patterns circling its spherical body, showcased on a pitch-black background.
-            Hottest pepper in the world - Illustration of a radiant green chili pepper, denoting the world's most fiery, with sizzling energy ripples flowing from its base, displayed on a dark black canvas.
-            Justin Timberlake - Illustration of a luminous purple vinyl record with vibrant sound waves undulating from its center, placed on a pitch-black background.
-            Music - Illustration of a stylized vinyl record with dynamic neon blue sound waves emanating from its center against a dark black background.
-            Star Wars - Illustration of a luminous red Death Star with vibrant energy beams radiating from its core, placed on a pitch-black background.
-            Mexico Vs Germany - Illustration of a luminous blue football boot, representing the athletic prowess in the Mexico vs Germany game, with vibrant sound waves flowing out, placed against a pitch-black backdrop.
-            Taylor Swift - Illustration of a neon green treble clef surrounded by swirling electric sound waves, contrasting against a deep black backdrop.
-            Diablo 4 Season 2 - Illustration of an illuminated green demonic sigil inspired by Diablo_4 Season_2 radiating with malevolent energy on a stark black canvas
-        """
-    pytrend = TrendReq()
-    topics = pytrend.suggestions(keyword=trend)
-    filtered_topics = [{'title': topic['title'], 'type': topic['type']} for topic in topics]
+    # systemPrompt = f"""
+    #         You are an amazing prompt engenieer that is here to design prompts for a text-to-image AI and to preserve the luminous / neon / radiant one color theme. Created prompts from topics like the following examples:
+    #
+    #         Star Wars - Illustration of a luminous yellow BB-8 droid with vibrant energy patterns circling its spherical body, showcased on a pitch-black background.
+    #         Hottest pepper in the world - Illustration of a radiant green chili pepper, denoting the world's most fiery, with sizzling energy ripples flowing from its base, displayed on a dark black canvas.
+    #         Justin Timberlake - Illustration of a luminous purple vinyl record with vibrant sound waves undulating from its center, placed on a pitch-black background.
+    #         Music - Illustration of a stylized vinyl record with dynamic neon blue sound waves emanating from its center against a dark black background.
+    #         Star Wars - Illustration of a luminous red Death Star with vibrant energy beams radiating from its core, placed on a pitch-black background.
+    #         Mexico Vs Germany - Illustration of a luminous blue football boot, representing the athletic prowess in the Mexico vs Germany game, with vibrant sound waves flowing out, placed against a pitch-black backdrop.
+    #         Taylor Swift - Illustration of a neon green treble clef surrounded by swirling electric sound waves, contrasting against a deep black backdrop.
+    #         Diablo 4 Season 2 - Illustration of an illuminated green demonic sigil inspired by Diablo_4 Season_2 radiating with malevolent energy on a stark black canvas
+    #     """
 
-    response = openai.ChatCompletion.create(
+    systemPrompt = """
+    You are an amazing prompt engenieer that is here to design prompts for a text-to-image AI and to preserve the luminous / neon / radiant one color theme. Created prompts from topics guidede by the following guidelines:
+    Art Style: luminous, Neon, vibrant, radiant illustration
+    Font Style for Logos: Dynamic, urban graffiti-style font with a subtle integration of the frog king silhouette within the letters.
+    Color Palette: Vivid and eye-catching, suitable for T-shirt merchandise.
+    Background: None, to highlight the design on merchandise.x
+    Brand: If given a brand / company name, keey it in the generated prompt.
+    
+    Examples:
+           
+    Star Wars - Illustration of a luminous yellow BB-8 droid with vibrant energy patterns circling its spherical body, showcased on a pitch-black background.
+    Hottest pepper in the world - Illustration of a radiant green chili pepper, denoting the world's most fiery, with sizzling energy ripples flowing from its base, displayed on a dark black canvas.
+    Justin Timberlake - Illustration of a luminous purple vinyl record with vibrant sound waves undulating from its center, placed on a pitch-black background.
+    Music - Illustration of a stylized vinyl record with dynamic neon blue sound waves emanating from its center against a dark black background.
+    Star Wars - Illustration of a luminous red Death Star with vibrant energy beams radiating from its core, placed on a pitch-black background.
+    Mexico Vs Germany - Illustration of a luminous blue football boot, representing the athletic prowess in the Mexico vs Germany game, with vibrant sound waves flowing out, placed against a pitch-black backdrop.
+    Taylor Swift - Illustration of a neon green treble clef surrounded by swirling electric sound waves, contrasting against a deep black backdrop.
+    Diablo 4 Season 2 - Illustration of an illuminated green demonic sigil inspired by Diablo_4 Season_2 radiating with malevolent energy on a stark black canvas
+    """
+    while True:
+        try:
+            pytrend = TrendReq()
+            topics = pytrend.suggestions(keyword=trend)
+            filtered_topics = [{'title': topic['title'], 'type': topic['type']} for topic in topics]
+            break
+        except:
+            pass
+
+    client = openai.OpenAI()
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": systemPrompt},
                   {"role": "user",
-                   "content": f"         I'll give you some context about the trend you'll be generating it will be related to the following topics: {filtered_topics}. Respond ONLY with the prompt. \n {trend} - "}],
+                   "content": f"I'll give you some context about the trend you'll be generating it will be related to the following topics: {filtered_topics}. Respond ONLY with the prompt. \n {trend} - "}],
     )
 
-    return response['choices'][0]['message']['content']
+    output = response.dict()['choices'][0]['message']['content']
+    return output
 
 class ImageGen:
     def __init__(self, prompt, trend, db_name):
@@ -153,7 +215,7 @@ class ImageGen:
         return image_path, b64_img
 
     @autolog
-    def create_img_dalle3(self):
+    def create_img_dalle3_unoffical(self):
         try:
             logging.basicConfig(level=logging.INFO)
             dalle = Dalle(dalle3_cookie)
@@ -163,6 +225,30 @@ class ImageGen:
 
         except Exception:
             self.create_img()
+
+    def create_img_dalle3_offical(self):
+        client = openai.OpenAI()
+
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=self.prompt,
+            size="1024x1024",
+            quality="hd",
+            n=1
+        )
+
+        image_url = response.data[0].url
+        response = requests.get(image_url)
+        image_path = f"./out/v1_txt2img_{self.trend}_{time.time()}.png"
+
+        if response.status_code == 200:
+            image_bytes = response.content
+            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            with open(image_path, 'wb') as file:
+                file.write(response.content)
+            return image_path, image_base64
+        else:
+            print(f'Failed to download image. Status code: {response.status_code}')
 
     @autolog
     def upscale_image(self, image_path):
@@ -275,14 +361,15 @@ class ImageGen:
         topics = pytrend.suggestions(keyword=self.trend)
         filtered_topics = [{'title': topic['title'], 'type': topic['type']} for topic in topics]
 
-        response = openai.ChatCompletion.create(
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": systemPrompt},
                       {"role": "user",
                        "content": f"Topics related to the trend for background:{filtered_topics} \nGenerate content for: {self.trend} - "}],
         )
 
-        to_parse = response['choices'][0]['message']['content']
+        to_parse = response.dict()['choices'][0]['message']['content']
         data_dict = json.loads(to_parse)
         current_date = date.today().strftime('%Y-%m-%d')
         data_dict['date'] = current_date
