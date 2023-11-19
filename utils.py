@@ -319,7 +319,10 @@ class ImageGen:
         rmbg = RemoveBg(os.environ.get("BG_REMOVER_API_KEY"), "error.log")
         with open(input_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read())
-        rmbg.remove_background_from_base64_img(encoded_string, new_file_name=output_path)
+        try:
+            rmbg.remove_background_from_base64_img(encoded_string, new_file_name=output_path)
+        except:
+            print("Ran out of free BG remover quata!")
 
 
 
