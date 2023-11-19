@@ -18,7 +18,7 @@ def autoDailyGeneratePicsPipeline(regions, localQueue):
         for trend in trends:
             metadate = {}
             prompt = utils.generate_prompt(trend)
-            image = utils.ImageGen(trend=trend, prompt=prompt, db_name='my_database')
+            image = utils.ImageGen(trend=trend, prompt=prompt)
             img_path, b64img = image.create_img_dalle3_offical()
             current_date = datetime.date.today().strftime('%Y-%m-%d')
             metadata = {
@@ -41,7 +41,7 @@ def autoDailyGeneratePicsPipeline(regions, localQueue):
 def generateImgPipeline(trend, local_queue):
     images = {}
     prompt = utils.generate_prompt(trend)
-    image = utils.ImageGen(trend=trend, prompt=prompt, db_name='my_database')
+    image = utils.ImageGen(trend=trend, prompt=prompt)
     img_path, b64img = image.create_img()
     current_date = datetime.date.today().strftime('%Y-%m-%d')
     metadata = {
@@ -57,6 +57,31 @@ def generateImgPipeline(trend, local_queue):
     itemId = image.get_id("products", "prompt", prompt)
     metadata['b64_img'] = b64img
     metadata['image_object'] = image
+    images[itemId] = metadata
+    local_queue.put(images)
+
+
+def generateVariantPipeline(image_object, local_queue):
+    images = {}
+    img_obj = image_object['image_object']
+    img_path, b64img = img_obj.generate_variant()
+
+    variant_obj = utils.ImageGen(prompt=img_obj.get_prompt(), trend=img_obj.get_trend())
+
+    current_date = datetime.date.today().strftime('%Y-%m-%d')
+    metadata = {
+        'description': "",
+        'prompt': variant_obj.get_prompt(),
+        'trend': variant_obj.get_trend(),
+        'hashtags': "",
+        'date': current_date,
+        'imagePath': img_path,
+    }
+    variant_obj.update_basic_marketing_dict(metadata)
+    variant_obj.create_in_db_image()
+    itemId = variant_obj.get_id("products", "prompt", variant_obj.get_prompt())
+    metadata['b64_img'] = b64img
+    metadata['image_object'] = variant_obj
     images[itemId] = metadata
     local_queue.put(images)
 

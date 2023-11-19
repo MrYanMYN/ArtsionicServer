@@ -174,7 +174,7 @@ def generate_prompt(trend):
     return output
 
 class ImageGen:
-    def __init__(self, prompt, trend, db_name):
+    def __init__(self, prompt, trend):
         load_dotenv()
         self.db_name = os.environ.get('DB_NAME')
         self.db_username = os.environ.get('DB_USER')
@@ -183,7 +183,14 @@ class ImageGen:
         self.db_port = int(os.environ.get('DB_PORT'))
         self.prompt = prompt
         self.trend = trend
+        self.image_path = ""
         self.marketing_dict = {}
+
+    def get_prompt(self):
+        return self.prompt
+
+    def get_trend(self):
+        return self.trend
 
     @autolog
     def create_img(self):
@@ -224,6 +231,46 @@ class ImageGen:
                 f.write(base64.b64decode(image["base64"]))
                 b64_img = b64_img + image["base64"]
 
+        self.image_path = image_path
+        return image_path, b64_img
+
+    @autolog
+    def generate_variant(self):
+        engine_id = "stable-diffusion-xl-1024-v1-0"
+        api_host = os.getenv("API_HOST", "https://api.stability.ai")
+
+        response = requests.post(
+            f"{api_host}/v1/generation/{engine_id}/image-to-image",
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {dreamstudio_api_key}"
+            },
+            files={
+                "init_image": open(self.image_path, "rb")
+            },
+            data={
+                "image_strength": 0.35,
+                "init_image_mode": "IMAGE_STRENGTH",
+                "text_prompts[0][text]": self.prompt,
+                "cfg_scale": 7,
+                "samples": 1,
+                "steps": 30,
+            }
+        )
+
+        if response.status_code != 200:
+            raise Exception("Non-200 response: " + str(response.text))
+
+        data = response.json()
+        image_path = f"./out/v1_txt2img_{self.trend}_{time.time()}.png"
+        b64_img = ""
+
+        for i, image in enumerate(data["artifacts"]):
+            with open(image_path, "wb") as f:
+                f.write(base64.b64decode(image["base64"]))
+                b64_img = b64_img + image["base64"]
+
+        self.image_path = image_path
         return image_path, b64_img
 
     @autolog

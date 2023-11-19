@@ -145,6 +145,24 @@ def generateImg():
         return jsonify({'success': True, 'message': 'Starting task...'})
     except Exception as err:
         return jsonify({'success': False, 'message': f'Error starting task: {err}'})
+
+@app.route('/generateVariant', methods=['POST'])
+@passkey_check()
+def generate_variant():
+    global images
+    image_id = request.json
+    image_id = json.dumps(image_id)
+    image_id = json.loads(image_id)
+    image_id = int(image_id["id"])
+
+    try:
+        processing_thread = threading.Thread(target=pipeline.generateVariantPipeline, args=(images[image_id], dataQueueImgs,))
+        processing_thread.start()
+        return jsonify({'success': True, 'message': 'Starting task variant...'})
+    except Exception as err:
+        return jsonify({'success': False, 'message': f'Error starting task: {err}'})
+
+
 @app.route('/regenerateImg', methods=['POST'])
 @passkey_check()
 def regenerateImg():
