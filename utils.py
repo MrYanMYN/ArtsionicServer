@@ -1,6 +1,8 @@
 import time
 from datetime import date
 import json
+
+import mysql.connector
 from rembg import remove
 from io import BytesIO
 from super_image import EdsrModel, ImageLoader
@@ -169,7 +171,12 @@ def generate_prompt(trend):
 
 class ImageGen:
     def __init__(self, prompt, trend, db_name):
-        self.db_name = db_name
+        load_dotenv()
+        self.db_name = os.environ.get('DB_NAME')
+        self.db_username = os.environ.get('DB_USER')
+        self.db_password = os.environ.get('DB_PASS')
+        self.db_host = os.environ.get('DB_HOST')
+        self.db_port = int(os.environ.get('DB_PORT'))
         self.prompt = prompt
         self.trend = trend
         self.marketing_dict = {}
@@ -319,11 +326,11 @@ class ImageGen:
     @autolog
     def get_id(self, table_name, column_name, value):
         # Connect to the database
-        conn = sqlite3.connect(f'{self.db_name}.db')
+        conn = mysql.connector.connect(user=self.db_username, password=self.db_password, host=self.db_host, database=self.db_name, port=self.db_port)
         cursor = conn.cursor()
 
         # Execute the query
-        cursor.execute(f"SELECT id FROM {table_name} WHERE {column_name}=?", (value,))
+        cursor.execute(f"SELECT id FROM {table_name} WHERE {column_name}=%s", (value,))
         result = cursor.fetchone()
 
         # Close the connection
@@ -342,11 +349,11 @@ class ImageGen:
 
     @autolog
     def create_in_db_image(self):
-        conn = sqlite3.connect(f'{self.db_name}.db')
+        conn = mysql.connector.connect(user=self.db_username, password=self.db_password, host=self.db_host, database=self.db_name, port=self.db_port)
         cursor = conn.cursor()
         schema = """
                     CREATE TABLE IF NOT EXISTS products (
-                        id INTEGER PRIMARY KEY,
+                        id INT AUTO_INCREMENT PRIMARY KEY,
                         product TEXT,
                         description TEXT,
                         prompt TEXT,
@@ -372,12 +379,12 @@ class ImageGen:
         # Use placeholders in the SQL query to insert data
         insert_query = """
                     INSERT INTO products (product, description, prompt, trend, hashtags, date, imagePath)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """
 
         # Check if a record with the same 'product' name already exists
 
-        cursor.execute("SELECT id FROM products WHERE product = ?", (data['prompt'],))
+        cursor.execute("SELECT id FROM products WHERE product = %s", (data['prompt'],))
         existing_record = cursor.fetchone()
 
         if existing_record is None:
@@ -424,11 +431,11 @@ class ImageGen:
 
     @autolog
     def update_in_db_complete(self, metadata):
-        conn = sqlite3.connect(f'{self.db_name}.db')
+        conn = mysql.connector.connect(user=self.db_username, password=self.db_password, host=self.db_host, database=self.db_name, port=self.db_port)
         cursor = conn.cursor()
         schema = """
                     CREATE TABLE IF NOT EXISTS products (
-                        id INTEGER PRIMARY KEY,
+                        id INT AUTO_INCREMENT PRIMARY KEY,
                         product TEXT,
                         description TEXT,
                         prompt TEXT,
@@ -452,14 +459,14 @@ class ImageGen:
         }
 
         # Check if a record with the same 'product' name already exists
-        cursor.execute("SELECT id FROM products WHERE product = ?", (data['product'],))
+        cursor.execute("SELECT id FROM products WHERE product = %s", (data['product'],))
         existing_record = cursor.fetchone()
 
         if existing_record is None:
             # Insert data if no existing record is found
             insert_query = """
                         INSERT INTO products (product, description, prompt, trend, hashtags, date, imagePath)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """
             cursor.execute(insert_query, (
                 data['product'], data['description'], data['prompt'], data['trend'], data['hashtags'],
@@ -470,8 +477,8 @@ class ImageGen:
             # Update the existing record
             update_query = """
                 UPDATE products 
-                SET description=?, prompt=?, trend=?, hashtags=?, date=?, imagePath=? 
-                WHERE product=?
+                SET description=%s, prompt=%s, trend=%s, hashtags=%s, date=%s, imagePath=%s 
+                WHERE product=%s
             """
             cursor.execute(update_query, (
                 data['description'], data['prompt'], data['trend'], data['hashtags'], data['date'],
@@ -556,7 +563,7 @@ class Promotion:
 #         metadata["imagePath"] = complete_img_path
 #         image.update_in_db(metadata)
 #
-#         if_upload = input("Upload?")
+#         if_upload = input("Upload%s")
 #         if if_upload == 'y':
 #             commerace = Commerce()
 #             printify_products = commerace.upload_to_printfy(complete_img_path, metadata)
