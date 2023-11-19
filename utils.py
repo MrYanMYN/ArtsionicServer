@@ -34,7 +34,11 @@ def autolog(func):
 
     def wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
-        logger.info(f"Called {func.__name__}({args}, {kwargs}) => {result}")
+        log_msg = f"Called {func.__name__}({args}, {kwargs}) => {result}"
+        # Truncate the log message to 150 characters if it's longer
+        if len(log_msg) > 250:
+            log_msg = log_msg[:247] + "..."
+        logger.info(log_msg)
         return result
     return wrapper
 
