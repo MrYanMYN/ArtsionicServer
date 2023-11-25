@@ -92,22 +92,22 @@ def create_product_printify(image_id, metadata, shop_id, API_KEY_PRINTIFY):
         "variants": [
             {
                 "id": 73871,
-                "price": 14990,
+                "price": 1499,
                 "is_enabled": True
             },
             {
                 "id": 73873,
-                "price": 14990,
+                "price": 1499,
                 "is_enabled": True
             },
             {
                 "id": 73875,
-                "price": 14990,
+                "price": 1499,
                 "is_enabled": False
             },
             {
                 "id": 73877,
-                "price": 14990,
+                "price": 1499,
                 "is_enabled": False
             }
         ],
